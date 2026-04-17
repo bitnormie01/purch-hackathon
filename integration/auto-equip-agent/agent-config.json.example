@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-04-16T15:00:00.000Z",
+  "useCase": "I need a productivity agent",
+  "totalCost": 3.03,
+  "skill": {
+    "slug": "task-prioritizer",
+    "title": "Task Prioritizer Pro",
+    "file": "./downloads/task-prioritizer.zip",
+    "price": 1.00,
+    "productType": "skill"
+  },
+  "knowledge": {
+    "slug": "gtd-methodology",
+    "title": "Getting Things Done Knowledge Base",
+    "file": "./downloads/gtd-methodology.zip",
+    "price": 1.00,
+    "productType": "knowledge"
+  },
+  "persona": {
+    "slug": "efficiency-expert",
+    "title": "Efficiency Expert Persona",
+    "file": "./downloads/efficiency-expert.zip",
+    "price": 1.00,
+    "productType": "persona"
+  },
+  "searchCosts": 0.03
+}

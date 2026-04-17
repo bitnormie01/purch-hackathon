@@ -1,0 +1,33 @@
+{
+  "name": "auto-equip-agent",
+  "version": "1.0.0",
+  "description": "Autonomous agent that searches Purch Vault and equips itself with the best Skill, Knowledge Pack, and Persona for any use case.",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "build": "tsc",
+    "equip": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@solana/kit": "^6.7.0",
+    "@x402/fetch": "^2.10.0",
+    "@x402/svm": "^2.10.0",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "purch",
+    "x402",
+    "autonomous-agent",
+    "vault",
+    "solana",
+    "USDC"
+  ],
+  "author": "0xjaadu",
+  "license": "MIT"
+}
