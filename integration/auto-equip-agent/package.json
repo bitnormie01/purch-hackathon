@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "build": "tsc",
-    "equip": "ts-node src/index.ts"
+    "equip": "ts-node src/index.ts",
+    "test": "jest"
   },
   "dependencies": {
     "@solana/kit": "^6.7.0",
@@ -16,7 +17,10 @@
     "dotenv": "^16.4.7"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0"
   },

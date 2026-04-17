@@ -16,7 +16,7 @@ import type { VaultItem, ScoreResult, ScoredItem, TopPick, ProductType } from ".
  *
  * Score ranges:
  *   - compositeScore: 0–100
- *   - proceedWithPurchase: true if score >= 40 AND budget passes
+ *   - proceedWithPurchase: true if score >= 65 AND budget passes
  *
  * Weights:
  *   - Value:       40% (download volume relative to price)
@@ -88,7 +88,7 @@ export function scoreItem(item: VaultItem, maxBudget: number): ScoreResult {
   );
 
   // ── Decision ──
-  const proceedWithPurchase = compositeScore >= 40;
+  const proceedWithPurchase = compositeScore >= 65;
 
   // ── Reasoning ──
   const reasons: string[] = [];

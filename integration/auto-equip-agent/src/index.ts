@@ -201,9 +201,10 @@ Examples:
     }
   }
 
-  // Download cost: $0.01 per download
-  const downloadCosts = validPicks.length * 0.01;
-  const estimatedTotal = estimatedItemCost + searchCosts + downloadCosts;
+  // Download cost estimate: $0.01 per pick. Actual cost recomputed after
+  // purchases below, since downloads only happen on successful buys.
+  const estimatedDownloadCosts = validPicks.length * 0.01;
+  const estimatedTotal = estimatedItemCost + searchCosts + estimatedDownloadCosts;
 
   console.log("\n" + "─".repeat(60));
   console.log(`  💰 Estimated total: ${usd(estimatedTotal)}`);
@@ -255,6 +256,10 @@ Examples:
   }
 
   // ── 8. Write agent-config.json ──
+  // Actual download cost: one $0.01 call per SUCCESSFUL buy (failed buys
+  // never reach the download step).
+  const successCount = Object.values(equipped).filter(Boolean).length;
+  const downloadCosts = successCount * 0.01;
   const totalCost = totalItemCost + searchCosts + downloadCosts;
 
   const config: AgentConfig = {
@@ -270,8 +275,6 @@ Examples:
   writeAgentConfig(config);
 
   // ── 9. Final summary ──
-  const successCount = Object.values(equipped).filter(Boolean).length;
-
   console.log("\n" + "═".repeat(60));
   console.log("  ✅ Auto-Equip Complete!");
   console.log("═".repeat(60));

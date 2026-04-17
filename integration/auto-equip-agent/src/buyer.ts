@@ -83,10 +83,13 @@ export async function buyAndDownload(
       throw new Error(`Download failed [${downloadResponse.status}]: ${body}`);
     }
 
-    // Save the ZIP file
+    // Save the ZIP file atomically (tmp + rename) to avoid leaving a
+    // partial/corrupt file if the process is interrupted mid-write.
     const zipBuffer = Buffer.from(await downloadResponse.arrayBuffer());
     const zipPath = path.join(DOWNLOADS_DIR, `${item.slug}.zip`);
-    fs.writeFileSync(zipPath, zipBuffer);
+    const tmpPath = zipPath + ".tmp";
+    fs.writeFileSync(tmpPath, zipBuffer);
+    fs.renameSync(tmpPath, zipPath);
 
     const sizeMB = (zipBuffer.length / 1024 / 1024).toFixed(2);
     console.log(`      💾 Saved: ${zipPath} (${sizeMB} MB)`);

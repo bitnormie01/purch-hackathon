@@ -2,7 +2,10 @@
 // wallet.ts — Loads wallet from .env, sets up x402 fetchWithPay
 // ─────────────────────────────────────────────────────────────
 
-import { createKeyPairSignerFromBytes } from "@solana/kit";
+import {
+  createKeyPairSignerFromBytes,
+  createKeyPairSignerFromPrivateKeyBytes,
+} from "@solana/kit";
 import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { ExactSvmScheme, SOLANA_MAINNET_CAIP2 } from "@x402/svm";
 import bs58 from "bs58";
@@ -67,15 +70,20 @@ export async function createFetchWithPay(
   // Decode base58 secret key to Uint8Array
   const secretKeyBytes = bs58.decode(secretKeyBase58);
 
-  if (secretKeyBytes.length !== 64) {
+  // Support both common export formats:
+  //   - 64 bytes: full Solana CLI keypair (priv + pub)
+  //   - 32 bytes: Phantom / Solflare (private key only)
+  let signer;
+  if (secretKeyBytes.length === 64) {
+    signer = await createKeyPairSignerFromBytes(secretKeyBytes);
+  } else if (secretKeyBytes.length === 32) {
+    signer = await createKeyPairSignerFromPrivateKeyBytes(secretKeyBytes);
+  } else {
     throw new Error(
-      `Wallet secret key must be 64 bytes when decoded. Got ${secretKeyBytes.length}. ` +
-        "Ensure WALLET_SECRET_KEY is a full Solana keypair (not just the private key half)."
+      `Wallet secret key must decode to 32 or 64 bytes. Got ${secretKeyBytes.length}. ` +
+        "Phantom exports 32 bytes; Solana CLI keypairs are 64 bytes."
     );
   }
-
-  // Create the Solana signer from raw bytes
-  const signer = await createKeyPairSignerFromBytes(secretKeyBytes);
 
   // Set up the x402 client with the Solana payment scheme
   const client = new x402Client();
