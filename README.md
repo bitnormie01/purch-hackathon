@@ -9,6 +9,8 @@ Four submissions built as a single working system for autonomous shopping agents
 | Penny | Persona | `penny-persona` | Best Persona | [./persona/](./persona/) |
 | Auto-Equip Agent | Integration | `auto-equip-agent` | Best Integration | [./integration/](./integration/) |
 
+> **To run the integration:** see [./integration/README.md](https://github.com/bitnormie01/purch-hackathon/tree/main/integration)
+
 The four submissions are designed to work as a stack. The Auto-Equip Agent uses the Smart Purchase Decision Scorer as its pre-transaction guardrail: before every vault purchase, it runs a five-step scoring workflow — price sanity, vendor legitimacy, need-price fit, budget compliance, and composite scoring — and only proceeds if the result clears 65/100. When it surfaces results to the user, it speaks as Penny: direct, opinionated, and incapable of framing a bad deal as a good one. Everything the agent needs to understand the x402 protocol, handle price drift, avoid double payments, and navigate the Vault API correctly comes from the field guide. Each piece works standalone. Together they are a complete blueprint for agentic commerce that doesn't lose the user's money.
 
 ---
