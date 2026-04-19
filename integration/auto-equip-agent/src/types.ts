@@ -51,16 +51,19 @@ export interface VaultBuyResponse {
   };
 }
 
-/** Scoring result from scorer.ts */
+/** Scoring result from scorer.ts — matches purchase-decision-scorer.md output schema */
 export interface ScoreResult {
   compositeScore: number;
   proceedWithPurchase: boolean;
+  confidenceLevel: "high" | "medium" | "low";
   reasoning: string;
   breakdown: {
-    valueScore: number;
-    trustScore: number;
-    descriptionScore: number;
-    budgetPass: boolean;
+    step1_priceScore: number;
+    step2_vendorScore: number;
+    step3_fitScore: number;
+    step4_budgetScore: number;
+    step5_bonus: number;
+    hardFail: boolean;
   };
 }
 
@@ -103,4 +106,5 @@ export interface EnvConfig {
   walletAddress: string;
   email: string;
   maxBudgetPerItem: number;
+  userNeed: "essential" | "convenience" | "luxury";
 }

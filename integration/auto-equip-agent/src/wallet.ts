@@ -52,7 +52,16 @@ export function loadEnvConfig(): EnvConfig {
     );
   }
 
-  return { walletSecretKey, walletAddress, email, maxBudgetPerItem };
+  const needLevelRaw = process.env.NEED_LEVEL ?? "convenience";
+  const validNeeds = ["essential", "convenience", "luxury"] as const;
+  if (!validNeeds.includes(needLevelRaw as any)) {
+    throw new Error(
+      `Invalid NEED_LEVEL: "${needLevelRaw}". Must be one of: ${validNeeds.join(", ")}.`
+    );
+  }
+  const userNeed = needLevelRaw as "essential" | "convenience" | "luxury";
+
+  return { walletSecretKey, walletAddress, email, maxBudgetPerItem, userNeed };
 }
 
 /**

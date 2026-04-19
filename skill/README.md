@@ -3,6 +3,8 @@
 A deterministic five-step scoring workflow that gives any Purch agent a principled buy/no-buy decision before committing funds. Without it, agents either approve every purchase blindly or rely on ad-hoc budget checks that miss vendor legitimacy, price fairness, and need-value alignment. Download from the Purch Vault or copy `purchase-decision-scorer.md` directly into your agent's context to use it.
 
 **Full spec:** [purchase-decision-scorer.md](./purchase-decision-scorer.md)
+**Reference implementation:** [smart-purchase-decision-scorer/scorer.ts](./smart-purchase-decision-scorer/scorer.ts)
+**Tests:** `cd smart-purchase-decision-scorer && npm install && npm test`
 
 ## What It Does
 

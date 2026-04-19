@@ -4,15 +4,19 @@ Four submissions built as a single working system for autonomous shopping agents
 
 | Submission | Category | Name | Prize Target | Folder |
 | :--- | :--- | :--- | :--- | :--- |
-| Smart Purchase Decision Scorer | Skill | `smart-purchase-decision-scorer` | Best Skill | [./skill/](./skill/) |
-| x402 Protocol Field Guide | Knowledge | `x402-protocol-field-guide` | Best Knowledge Pack | [./knowledge/](./knowledge/) |
-| Penny | Persona | `penny-persona` | Best Persona | [./persona/](./persona/) |
-| Auto-Equip Agent | Integration | `auto-equip-agent` | Best Integration | [./integration/](./integration/) |
+| **Smart Purchase Decision Scorer** | Skill | `smart-purchase-decision-scorer` | Best Skill | [./skill/](./skill/) |
+| **x402 Protocol Field Guide** | Knowledge | `x402-protocol-field-guide` | Best Knowledge Pack | [./knowledge/](./knowledge/) |
+| **Penny** | Persona | `penny-persona` | Best Persona | [./persona/](./persona/) |
+| **Auto-Equip Agent** | Integration | `auto-equip-agent` | Best Integration | [./integration/](./integration/) |
 
-> **To run the integration:** see [./integration/README.md](https://github.com/bitnormie01/purch-hackathon/tree/main/integration)
+The four submissions are designed to work as a stack:
+- **Best Skill:** A production-ready, runnable TypeScript implementation of the 5-step Purchase Decision Scorer. It performs deterministic evaluations of price sanity, vendor legitimacy, and budget fit.
+- **Best Knowledge Pack:** The definitive x402 Field Guide. Now features a Quickstart section for 5-minute integrations and zero unresolved `[VERIFY]` tags—every claim is tested and confirmed against the protocol.
+- **Best Persona:** Penny. Features a dedicated Purch Vault variant system prompt and new example conversations (Conversation 6) showing her navigating digital marketplaces with her signature "deal-obsessed" voice.
+- **Best Integration:** The Auto-Equip Agent. A working CLI that finds, scores, buys, and downloads the best Vault assets for any use case. Its scoring logic is now fully aligned with the 5-step Skill specification, including price-drift re-scoring.
 
-The four submissions are designed to work as a stack. The Auto-Equip Agent uses the Smart Purchase Decision Scorer as its pre-transaction guardrail: before every vault purchase, it runs a five-step scoring workflow — price sanity, vendor legitimacy, need-price fit, budget compliance, and composite scoring — and only proceeds if the result clears 65/100. When it surfaces results to the user, it speaks as Penny: direct, opinionated, and incapable of framing a bad deal as a good one. Everything the agent needs to understand the x402 protocol, handle price drift, avoid double payments, and navigate the Vault API correctly comes from the field guide. Each piece works standalone. Together they are a complete blueprint for agentic commerce that doesn't lose the user's money.
+Each piece works standalone. Together they are a complete blueprint for agentic commerce that doesn't lose the user's money.
 
 ---
 
-Built by [0xjaadu](https://github.com/0xjaadu)
+Built by [0xjaadu](https://github.com/bitnormie01)

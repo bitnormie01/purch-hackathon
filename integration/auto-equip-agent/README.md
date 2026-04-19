@@ -36,6 +36,7 @@ npx ts-node src/index.ts "I need a productivity agent"
 | `WALLET_ADDRESS` | ✅ | Solana public address, base58 |
 | `EMAIL` | ✅ | Email for Purch purchase confirmations |
 | `MAX_BUDGET_PER_ITEM` | | Max USDC per item (default: $5.00) |
+| `NEED_LEVEL` | | Need urgency: `essential`, `convenience`, `luxury` (default: `convenience`) |
 
 ## Example
 
@@ -64,20 +65,23 @@ $ npx ts-node src/index.ts "marketing automation agent"
   ⚡ Skill: Email Campaign Automator
      Slug:   email-campaign-automator
      Price:  $1.00 USDC
-     Score:  78/100
-     Why:    ✓ Featured by Purch · ✓ 42 downloads (community-validated)
+     Score:  82/100  ✅ PROCEED
+     Price: 100  Vendor: 80  Fit: 80  Budget: 100  Bonus: 10
+     Why:    ✓ Price well within range · ✓ Vendor verified · ✓ Good need-price fit · ✓ Within budget · ✓ Consistency bonus +10
 
   📚 Knowledge Pack: Growth Hacking Playbook
      Slug:   growth-hacking-playbook
      Price:  $2.00 USDC
-     Score:  65/100
-     Why:    ✓ Well-documented · ✓ Strong value ratio
+     Score:  72/100  ✅ PROCEED
+     Price: 80  Vendor: 100  Fit: 60  Budget: 100  Bonus: 10
+     Why:    ✓ Price well within range · ✓ Vendor verified · ✓ Good need-price fit · ✓ Within budget · ✓ Consistency bonus +10
 
   🎭 Persona: Marketing Maven
      Slug:   marketing-maven
      Price:  $1.00 USDC
-     Score:  72/100
-     Why:    ✓ Featured by Purch · ✓ 28 downloads (community-validated)
+     Score:  78/100  ✅ PROCEED
+     Price: 100  Vendor: 80  Fit: 80  Budget: 100  Bonus: 7
+     Why:    ✓ Price well within range · ✓ Vendor verified · ✓ Good need-price fit · ✓ Within budget · ✓ Consistency bonus +7
 
 ────────────────────────────────────────────────────────────────
   💰 Estimated total: $4.06 USDC
@@ -139,16 +143,17 @@ $ npx ts-node src/index.ts "marketing automation agent"
 
 ## How Scoring Works
 
-Each Vault item is evaluated on four dimensions:
+`src/scorer.ts` implements the same five-step logic defined in [`purchase-decision-scorer.md`](../skill/purchase-decision-scorer.md), adapted for Vault item data.
 
-| Dimension | Weight | Signal |
-|:---|:---:|:---|
-| **Value** | 40% | Downloads per dollar — community validation |
-| **Trust** | 30% | Featured status (+30), agent creator (+15), 10+ downloads (+15) |
-| **Description** | 30% | cardDescription length as a documentation quality proxy |
-| **Budget** | Gate | Hard fail if price > `MAX_BUDGET_PER_ITEM` |
+| Step | Name | Weight | Signal |
+|:---|:---|:---:|:---|
+| 1 | **Price Sanity Check** | 0.25 | Price vs. category ceiling (skill=$50, persona=$30, knowledge=$75) |
+| 2 | **Vendor Legitimacy Audit** | 0.20 | Creator name heuristics — length, blocklist, legitimacy checks |
+| 3 | **Need-Price Fit Analysis** | 0.20 | Price vs. budget × need urgency band |
+| 4 | **Budget Guardrail** | 0.25 | Hard gate — `price > budget` = instant block |
+| 5 | **Composite Scoring** | 0.10 | Consistency bonus: all steps ≥ 60 earns +10 points |
 
-Items scoring ≥ 40/100 that pass budget are eligible. Top scorer per type wins.
+Items scoring ≥ 65/100 with no hard-fail proceed to purchase. The integration also re-runs the scorer if the 402 challenge price drifts more than 5% from the search price.
 
 ## Architecture
 
@@ -156,7 +161,7 @@ Items scoring ≥ 40/100 that pass budget are eligible. Top scorer per type wins
 src/
   index.ts    — CLI orchestrator: parse → search → score → confirm → buy → config
   wallet.ts   — Loads keypair from .env, creates fetchWithPay via @x402/fetch
-  search.ts   — Parallel vault/search calls (one per productType)
+  search.ts   — Three sequential vault/search calls (one per productType, 500ms delays)
   scorer.ts   — Purchase Decision Scorer adapted for Vault item signals
   buyer.ts    — buy + download flow, saves ZIPs to ./downloads/
   types.ts    — All TypeScript interfaces

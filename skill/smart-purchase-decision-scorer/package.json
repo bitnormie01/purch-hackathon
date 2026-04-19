@@ -1,0 +1,22 @@
+{
+  "name": "smart-purchase-decision-scorer",
+  "version": "1.0.0",
+  "description": "Deterministic 5-step purchase evaluation scorer for Purch x402 agents",
+  "main": "scorer.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  },
+  "author": "0xjaadu",
+  "license": "MIT"
+}

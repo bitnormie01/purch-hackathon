@@ -20,9 +20,9 @@ This document exists because the x402 protocol is new, the official documentatio
 
 Agent builders integrating the Purch x402 API directly. It assumes you can read TypeScript and understand basic HTTP semantics. It does not explain Solana fundamentals or USDC mechanics — those are prerequisites.
 
-## A Note on [VERIFY] Tags
+## A Note on Resolved [VERIFY] Tags
 
-Eight items in this guide are marked `[VERIFY]`. These are implementation details that could not be confirmed from available documentation — including the exact `downloadToken` expiry window, whether `@x402/fetch` exposes a pre-payment hook, and what the manual 402 response body looks like. They are flagged honestly rather than fabricated. If you can confirm any of them from first-hand testing or Purch source access, update the guide.
+All items previously marked `[VERIFY]` in this guide have been resolved using evidence from the working `auto-equip-agent` integration code, `SKILL.md` endpoint documentation, and `@x402/fetch` package behavior. Where exact details remain undocumented (e.g., `downloadToken` expiry duration), this is stated explicitly with best-guess reasoning based on code evidence.
 
 ## Usage
 

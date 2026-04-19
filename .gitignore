@@ -1,0 +1,17 @@
+node_modules/
+dist/
+downloads/
+.env
+*.env
+agent-config.json
+*.log
+*.tmp
+package-lock.json
+/package.json
+integration/FIX.md
+skill/FIX.md
+knowledge/FIX.md
+persona/FIX.md
+SKILL.md
+TARGET.md
+HACKATHON_DETAILS.md

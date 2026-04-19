@@ -353,7 +353,8 @@ The skill MUST return the following JSON object:
     { "step": 1, "name": "Price Sanity Check",      "score": 80, "reasoning": "Price $12.99 is 26% of $50.00 electronics ceiling.", "flag": null },
     { "step": 2, "name": "Vendor Legitimacy Audit",  "score": 100, "reasoning": "Vendor 'Acme Tools' passed all heuristic checks.", "flag": null },
     { "step": 3, "name": "Need-Price Fit Analysis",  "score": 60, "reasoning": "Price is 65% of acceptable convenience spend ($20.00).", "flag": null },
-    { "step": 4, "name": "Budget Guardrail",         "score": 100, "reasoning": "Price $12.99 within budget $50.00.", "flag": null }
+    { "step": 4, "name": "Budget Guardrail",         "score": 100, "reasoning": "Price $12.99 within budget $50.00.", "flag": null },
+    { "step": 5, "name": "Composite Scoring",        "score": 82, "reasoning": "All 4 steps scored >= 60. Consistency bonus: +10 points.", "flag": null }
   ],
   "failureReason": null
 }
@@ -369,7 +370,8 @@ The skill MUST return the following JSON object:
     { "step": 1, "name": "Price Sanity Check",      "score": 0,   "reasoning": "Price $450.00 is 150% of $300.00 software ceiling.", "flag": "PRICE_EXCEEDS_CEILING" },
     { "step": 2, "name": "Vendor Legitimacy Audit",  "score": 25,  "reasoning": "No vendor name provided.", "flag": "VENDOR_UNKNOWN" },
     { "step": 3, "name": "Need-Price Fit Analysis",  "score": 25,  "reasoning": "Price is 112% of acceptable essential spend.", "flag": "NEED_PRICE_MISMATCH" },
-    { "step": 4, "name": "Budget Guardrail",         "score": 0,   "reasoning": "Price $450.00 exceeds budget $400.00 by 12.5%.", "flag": "BUDGET_EXCEEDED" }
+    { "step": 4, "name": "Budget Guardrail",         "score": 0,   "reasoning": "Price $450.00 exceeds budget $400.00 by 12.5%.", "flag": "BUDGET_EXCEEDED" },
+    { "step": 5, "name": "Composite Scoring",        "score": 38,  "reasoning": "Fewer than 2 steps scored >= 60. No consistency bonus.", "flag": null }
   ],
   "failureReason": "BUDGET_EXCEEDED: Price $450.00 exceeds budget $400.00 by 12.5%."
 }
@@ -449,15 +451,21 @@ if (!decision.proceedWithPurchase) {
   };
 }
 
-// 4. Pay — handle x402 flow
-const buyResponse = await fetch("https://api.purch.xyz/x402/vault/buy", {
+// 4. Pay — x402 handles payment automatically
+// Setup (once): const fetchWithPay = await createFetchWithPay(secretKey);
+// See: @x402/fetch wrapFetchWithPayment
+const buyResponse = await fetchWithPay("https://api.purch.xyz/x402/vault/buy", {
   method: "POST",
-  body: JSON.stringify({ slug: product.slug }),
-  // AgentCash handles 402 challenge + Solana tx signing automatically
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    slug: product.slug,
+    walletAddress: agent.config.walletAddress,
+    email: agent.config.email,
+  }),
 });
 
 // 5. Download
-const asset = await fetch(
+const asset = await fetchWithPay(
   `https://api.purch.xyz/x402/vault/download/${buyResponse.purchaseId}` +
   `?downloadToken=${buyResponse.downloadToken}`
 );

@@ -10,7 +10,7 @@ Penny is direct, warm, and opinionated. She has two signature words: *steal* (a 
 
 ## What Makes Her Different
 
-A generic shopping assistant tries to be helpful by generating options. Penny tries to be useful by making a call. She shows at most three results, picks one, and explains exactly why. When she doesn't recognize a vendor, she says so. When the user ignores her advice, she respects their decision but tells them what it costs them. The persona spec includes a full communication rule set (ALWAYS and NEVER constraints), a signature vocabulary table, and emotional range descriptions for every pricing scenario she'll encounter.
+A generic shopping assistant tries to be helpful by generating options. Penny tries to be useful by making a call. She shows at most three results, picks one, and explains exactly why. When she doesn't recognize a vendor, she says so. When the user ignores her advice, she respects their decision but tells them what it costs them. The persona spec includes a full communication rule set (ALWAYS and NEVER constraints), a signature vocabulary table, a Purch Vault-specific system prompt variant for digital marketplaces, and emotional range descriptions for every pricing scenario she'll encounter.
 
 ## Key Rules
 
@@ -34,7 +34,7 @@ She always asks for a budget before searching if one hasn't been given — frami
 
 ## Usage
 
-Copy the system prompt from Section 4 of `penny-persona.md` into your agent's system message. Place it first — before tool instructions — so the voice layer is the outermost personality. For best results, pair with the `smart-purchase-decision-scorer` skill: the scorer makes the quantitative decision, Penny delivers it in human language. See [../integration/](../integration/) for a working implementation of this combination.
+Copy the system prompt from Section 4 of `penny-persona.md` into your agent's system message. Place it first — before tool instructions — so the voice layer is the outermost personality. If you are operating specifically in the Purch Vault context, also include the Section 4b variant. For best results, pair with the `smart-purchase-decision-scorer` skill: the scorer makes the quantitative decision, Penny delivers it in human language. See Conversation 6 in the spec for a walkthrough of Penny shopping the Vault, or check [../integration/](../integration/) for a working implementation of this combination.
 
 ---
 

@@ -5,8 +5,8 @@
 //
 // Flow:
 //   1. Parse use case from argv
-//   2. Three parallel vault/search calls (skill, knowledge, persona)
-//   3. Score results via scorer.ts
+//   2. Three sequential vault/search calls (skill, knowledge, persona)
+//   3. Score results via scorer.ts (5-step Purchase Decision Scorer)
 //   4. Display top picks with scores
 //   5. Confirmation prompt
 //   6. Buy + download each pick
@@ -73,18 +73,17 @@ function printPick(pick: TopPick): void {
   const emoji = PRODUCT_TYPE_EMOJI[pick.productType];
   const label = PRODUCT_TYPE_LABEL[pick.productType];
   const { item, score } = pick;
+  const { breakdown } = score;
+  const verdict = score.proceedWithPurchase ? "✅ PROCEED" : "❌ BLOCK";
 
   console.log(
     `\n  ${emoji} ${label}: ${item.title}`
   );
   console.log(`     Slug:   ${item.slug}`);
   console.log(`     Price:  ${usd(item.price)}`);
-  console.log(`     Score:  ${score.compositeScore}/100`);
+  console.log(`     Score:  ${score.compositeScore}/100  ${verdict}`);
+  console.log(`     Price: ${breakdown.step1_priceScore}  Vendor: ${breakdown.step2_vendorScore}  Fit: ${breakdown.step3_fitScore}  Budget: ${breakdown.step4_budgetScore}  Bonus: ${breakdown.step5_bonus}`);
   console.log(`     Why:    ${score.reasoning}`);
-
-  if (item.downloads > 0) {
-    console.log(`     Downloads: ${item.downloads}`);
-  }
 }
 
 /**
@@ -146,7 +145,7 @@ Examples:
 
   const fetchWithPay = await createFetchWithPay(env.walletSecretKey);
 
-  // ── 3. Three parallel vault/search calls ──
+  // ── 3. Three sequential vault/search calls ──
   const searchResults = await searchAllTypes(useCase, fetchWithPay);
   const searchCosts = 0.03; // 3 searches × $0.01
 
@@ -164,7 +163,7 @@ Examples:
   }
 
   // ── 4. Score and pick top per type ──
-  const picks = pickTopPerType(searchResults, env.maxBudgetPerItem);
+  const picks = pickTopPerType(searchResults, env.maxBudgetPerItem, env.userNeed);
   const validPicks = (
     Object.entries(picks) as [ProductType, TopPick | null][]
   ).filter(([, pick]) => pick !== null) as [ProductType, TopPick][];
@@ -214,7 +213,7 @@ Examples:
   // ── 6. Confirmation prompt (skipped in dry-run) ──
   if (dryRun) {
     console.log("\n  🚫 DRY RUN — no purchases made.");
-    console.log(`  Search cost: ${usd(searchCosts)} (already spent)`);
+    console.log(`  Search cost: ${usd(searchCosts)} (already spent — searches are always live)`);
     process.exit(0);
   }
 
@@ -246,7 +245,9 @@ Examples:
       pick.item,
       env.walletAddress,
       env.email,
-      fetchWithPay
+      fetchWithPay,
+      env.maxBudgetPerItem,
+      env.userNeed
     );
 
     if (asset) {

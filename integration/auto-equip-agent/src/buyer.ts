@@ -1,45 +1,71 @@
 // ─────────────────────────────────────────────────────────────
 // buyer.ts — Buy + download flow for Vault items
 //
-// 1. POST /x402/vault/buy  → { purchaseId, downloadToken }
-// 2. GET  /x402/vault/download/:purchaseId → ZIP file
-// 3. Save ZIP to ./downloads/<slug>.zip
+// 1. Probe /x402/vault/buy for 402 challenge price (drift check)
+// 2. POST /x402/vault/buy via fetchWithPay → { purchaseId, downloadToken }
+// 3. GET  /x402/vault/download/:purchaseId → ZIP file
+// 4. Save ZIP to ./downloads/<slug>.zip
 // ─────────────────────────────────────────────────────────────
 
 import fs from "fs";
 import path from "path";
 import type { VaultItem, VaultBuyResponse, EquippedAsset } from "./types";
+import { scoreItem } from "./scorer";
 
 const BASE_URL = "https://api.purch.xyz";
 const DOWNLOADS_DIR = path.resolve(process.cwd(), "downloads");
 
-/**
- * Ensures the downloads directory exists.
- */
 function ensureDownloadsDir(): void {
   if (!fs.existsSync(DOWNLOADS_DIR)) {
     fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
   }
 }
 
-/**
- * Purchases a single Vault item and downloads the ZIP.
- *
- * Costs:
- *   - Buy:      item.price USDC (x402)
- *   - Download:  $0.01 USDC (x402)
- *
- * @returns EquippedAsset with file path, or null on failure
- */
 export async function buyAndDownload(
   item: VaultItem,
   walletAddress: string,
   email: string,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
+  maxBudget: number = 5.0,
+  userNeed: "essential" | "convenience" | "luxury" = "convenience"
 ): Promise<EquippedAsset | null> {
   ensureDownloadsDir();
 
-  // ── Step 1: Buy ──
+  // ── Step 1a: Probe for the real 402 price BEFORE paying ──
+  try {
+    const probeResponse = await fetch(`${BASE_URL}/x402/vault/buy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: item.slug, walletAddress, email }),
+    });
+
+    if (probeResponse.status === 402) {
+      try {
+        const challenge = (await probeResponse.json()) as Record<string, any>;
+        const challengePrice = challenge?.amount ?? challenge?.paymentRequired?.price;
+
+        if (challengePrice != null && item.price > 0) {
+          const drift = Math.abs(challengePrice - item.price) / item.price;
+
+          if (drift > 0.05) {
+            console.log(`  ⚠️  Price drifted ${(drift * 100).toFixed(1)}% ($${item.price} → $${challengePrice}) — re-scoring...`);
+            const reScore = scoreItem({ ...item, price: challengePrice }, maxBudget, userNeed);
+            if (!reScore.proceedWithPurchase) {
+              console.log(`  ❌ Re-score blocked purchase at new price $${challengePrice}`);
+              return null;
+            }
+            console.log(`  ✓  Re-score passed at $${challengePrice} (${reScore.compositeScore}/100)`);
+          }
+        }
+      } catch {
+        // 402 body not parseable — proceed with original price
+      }
+    }
+  } catch {
+    // Probe failed — proceed with the buy anyway
+  }
+
+  // ── Step 1b: Buy via fetchWithPay ──
   console.log(`\n  🛒  Buying "${item.title}" (${item.slug}) for $${item.price} USDC...`);
 
   let buyResult: VaultBuyResponse;
@@ -67,7 +93,6 @@ export async function buyAndDownload(
   }
 
   // ── Step 2: Download IMMEDIATELY after buy ──
-  // downloadToken may expire — no processing between buy and download.
   const downloadUrl = new URL(
     `${BASE_URL}/x402/vault/download/${encodeURIComponent(buyResult.purchaseId)}`
   );
@@ -83,8 +108,6 @@ export async function buyAndDownload(
       throw new Error(`Download failed [${downloadResponse.status}]: ${body}`);
     }
 
-    // Save the ZIP file atomically (tmp + rename) to avoid leaving a
-    // partial/corrupt file if the process is interrupted mid-write.
     const zipBuffer = Buffer.from(await downloadResponse.arrayBuffer());
     const zipPath = path.join(DOWNLOADS_DIR, `${item.slug}.zip`);
     const tmpPath = zipPath + ".tmp";
@@ -114,20 +137,18 @@ export async function buyAndDownload(
   }
 }
 
-/**
- * Purchases and downloads multiple items sequentially.
- * Returns the list of equipped assets (nulls filtered out).
- */
 export async function buyAllPicks(
   items: VaultItem[],
   walletAddress: string,
   email: string,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
+  maxBudget: number = 5.0,
+  userNeed: "essential" | "convenience" | "luxury" = "convenience"
 ): Promise<EquippedAsset[]> {
   const results: EquippedAsset[] = [];
 
   for (const item of items) {
-    const asset = await buyAndDownload(item, walletAddress, email, fetchFn);
+    const asset = await buyAndDownload(item, walletAddress, email, fetchFn, maxBudget, userNeed);
     if (asset) {
       results.push(asset);
     }

@@ -19,42 +19,31 @@ function makeItem(overrides: Partial<VaultItem> = {}): VaultItem {
   };
 }
 
-describe("scoreItem", () => {
+describe("scoreItem (5-step Purchase Decision Scorer)", () => {
   it("compositeScore never exceeds 100", () => {
-    // Stack every possible bonus: max downloads, featured, agent creator,
-    // long description, very cheap price.
     const item = makeItem({
       price: 0.01,
-      downloads: 100_000,
-      featured: true,
-      creator: { name: "bot", type: "agent" },
-      cardDescription: "x".repeat(500),
+      creator: { name: "Trusted Vendor Co", type: "agent" },
     });
     const result = scoreItem(item, 100);
     expect(result.compositeScore).toBeLessThanOrEqual(100);
   });
 
   it("compositeScore never goes below 0", () => {
-    // Worst case: no downloads, no description, not featured, human creator.
     const item = makeItem({
-      downloads: 0,
-      featured: false,
-      cardDescription: "",
-      creator: { name: "nobody", type: "human" },
+      price: 999,
+      creator: { name: "", type: "human" },
     });
-    const result = scoreItem(item, 100);
+    const result = scoreItem(item, 1);
     expect(result.compositeScore).toBeGreaterThanOrEqual(0);
   });
 
   it("proceedWithPurchase is false when composite score < 65", () => {
-    // No description (descScore=0), no downloads (valueScore=10),
-    // not featured, human creator (trustScore=40).
-    // Composite = 10*0.4 + 40*0.3 + 0*0.3 = 16 → below 65.
+    // Unknown vendor + high price relative to ceiling → low score
     const item = makeItem({
-      downloads: 0,
-      cardDescription: "",
-      featured: false,
-      creator: { name: "nobody", type: "human" },
+      price: 80,
+      productType: "skill", // ceiling = $50
+      creator: { name: "", type: "human" },
     });
     const result = scoreItem(item, 100);
     expect(result.compositeScore).toBeLessThan(65);
@@ -62,14 +51,10 @@ describe("scoreItem", () => {
   });
 
   it("proceedWithPurchase is true when composite score >= 65", () => {
-    // Featured + good downloads + long description → should clear 65.
     const item = makeItem({
       price: 1.0,
-      downloads: 200,
-      featured: true,
-      creator: { name: "pro", type: "agent" },
-      cardDescription:
-        "This is a thoroughly-written description that clearly explains the item, its purpose, and the trade-offs involved in picking it.",
+      productType: "skill",
+      creator: { name: "Acme Tools", type: "human" },
     });
     const result = scoreItem(item, 100);
     expect(result.compositeScore).toBeGreaterThanOrEqual(65);
@@ -77,33 +62,62 @@ describe("scoreItem", () => {
   });
 
   it("budget hard fail: proceedWithPurchase always false when price > budget", () => {
-    // Even an otherwise-perfect item must fail if it exceeds the budget.
     const item = makeItem({
       price: 100,
-      downloads: 10_000,
-      featured: true,
-      creator: { name: "pro", type: "agent" },
-      cardDescription: "x".repeat(500),
+      creator: { name: "Acme Tools", type: "agent" },
     });
     const result = scoreItem(item, 5);
     expect(result.proceedWithPurchase).toBe(false);
-    expect(result.breakdown.budgetPass).toBe(false);
-    expect(result.reasoning).toMatch(/BUDGET_FAIL/);
-  });
-
-  it("featured item scores higher than non-featured identical item", () => {
-    const base = makeItem({ featured: false });
-    const featured = makeItem({ featured: true });
-    const a = scoreItem(base, 100);
-    const b = scoreItem(featured, 100);
-    expect(b.compositeScore).toBeGreaterThan(a.compositeScore);
+    expect(result.breakdown.hardFail).toBe(true);
+    expect(result.breakdown.step4_budgetScore).toBe(0);
+    expect(result.reasoning).toMatch(/BUDGET_EXCEEDED/);
   });
 
   it("free item (price=0) does not cause division by zero", () => {
-    const item = makeItem({ price: 0, downloads: 10 });
+    const item = makeItem({ price: 0 });
     const result = scoreItem(item, 100);
     expect(Number.isFinite(result.compositeScore)).toBe(true);
     expect(Number.isNaN(result.compositeScore)).toBe(false);
-    expect(result.breakdown.budgetPass).toBe(true);
+    expect(result.breakdown.hardFail).toBe(false);
+    expect(result.breakdown.step1_priceScore).toBe(100);
+    expect(result.breakdown.step4_budgetScore).toBe(100);
+  });
+
+  it("unknown vendor scores low on step2", () => {
+    const item = makeItem({ creator: { name: "", type: "human" } });
+    const result = scoreItem(item, 100);
+    expect(result.breakdown.step2_vendorScore).toBe(25);
+  });
+
+  it("luxury need level caps step3 when price > 30% of budget", () => {
+    const item = makeItem({ price: 4.0, productType: "persona" });
+    const result = scoreItem(item, 10, "luxury");
+    expect(result.breakdown.step3_fitScore).toBeLessThanOrEqual(20);
+  });
+
+  it("consistency bonus: all steps >= 60 earns bonus", () => {
+    const item = makeItem({
+      price: 1.0,
+      productType: "skill",
+      creator: { name: "Verified Corp", type: "human" },
+    });
+    const result = scoreItem(item, 100, "convenience");
+    // All steps should be >= 60 for a cheap item with a good vendor
+    expect(result.breakdown.step5_bonus).toBeGreaterThan(0);
+  });
+
+  it("confidenceLevel is high when all steps >= 60 with no flags", () => {
+    const item = makeItem({
+      price: 1.0,
+      creator: { name: "Verified Corp", type: "human" },
+    });
+    const result = scoreItem(item, 100);
+    expect(result.confidenceLevel).toBe("high");
+  });
+
+  it("confidenceLevel is low when any step scores 0", () => {
+    const item = makeItem({ price: 100 });
+    const result = scoreItem(item, 5);
+    expect(result.confidenceLevel).toBe("low");
   });
 });
